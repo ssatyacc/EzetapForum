@@ -11,12 +11,12 @@ import org.json.JSONObject;
  * Created by Satya Chaitanya on 9/29/16.
  */
 
-class EzetapForumData {
-    private static final String TAG = "EzetapForumData";
+class Screen1Data {
+    private static final String TAG = "Screen1Data";
     private static final String FORUM_URL = "http://d.eze.cc/mobileapps/test.json";
     private ForumDataListener mListener;
 
-    EzetapForumData(ForumDataListener listener) {
+    Screen1Data(ForumDataListener listener) {
         mListener = listener;
     }
 

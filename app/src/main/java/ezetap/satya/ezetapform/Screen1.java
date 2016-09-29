@@ -6,16 +6,16 @@ import android.view.View;
 
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity {
+public class Screen1 extends AppCompatActivity {
 
-    private EzetapForumData dataApi;
+    private Screen1Data dataApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_screen1);
 
-        dataApi = new EzetapForumData(new EzetapForumData.ForumDataListener() {
+        dataApi = new Screen1Data(new Screen1Data.ForumDataListener() {
             @Override
             public void onSuccess(JSONObject response) {
                 showForum(response);
@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showForum(JSONObject response) {
+        findViewById(R.id.loading).setVisibility(View.GONE);
+        findViewById(R.id.retry).setVisibility(View.GONE);
         // TODO: 9/29/16 Create view based on response
     }
 
