@@ -17,14 +17,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.TreeMap;
 
 public class Screen1 extends AppCompatActivity {
     private static final String TAG = "Screen1";
 
     private static final int DEFAULT_PADDING = 16;
-    TreeMap<String, EditText> inputValues = new TreeMap<>();
+    LinkedHashMap<String, View> inputValues = new LinkedHashMap<>();
     private Screen1Data dataApi;
     private LinearLayout root;
 
@@ -85,7 +85,7 @@ public class Screen1 extends AppCompatActivity {
                     textboxTextView.setLayoutParams(new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT));
-                    textboxTextView.setText(textboxName);
+                    textboxTextView.setText(textboxName + " : ");
 
                     final EditText textboxEditText = new EditText(this);
                     textboxEditText.setLayoutParams(new LinearLayout.LayoutParams(
@@ -144,6 +144,8 @@ public class Screen1 extends AppCompatActivity {
                     layout.addView(dropdownTextView);
                     layout.addView(dropdownSpinner);
 
+                    inputValues.put(dropdownName, dropdownSpinner);
+
                     break;
                 case "button":
                 default:
@@ -160,13 +162,21 @@ public class Screen1 extends AppCompatActivity {
                     layout.addView(buttonButton);
                     break;
             }
-
             root.addView(layout);
         }
     }
 
     private void proceedToScreen2() {
-        Screen2.start(this);
+        LinkedHashMap<String, String> valuePairs = new LinkedHashMap<>();
+        for (String s : inputValues.keySet()) {
+            View view = inputValues.get(s);
+            if (view instanceof EditText) {
+                valuePairs.put(s, ((EditText) view).getText().toString());
+            } else if (view instanceof Spinner) {
+                valuePairs.put(s, ((Spinner) view).getSelectedItem().toString());
+            }
+        }
+        Screen2.start(this, valuePairs);
     }
 
     private void showRetry() {
