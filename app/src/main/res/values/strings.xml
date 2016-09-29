@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">EzetapForm</string>
+    <string name="loading_message">Loading ...</string>
+    <string name="retry_message">Retry after sometime</string>
 </resources>
