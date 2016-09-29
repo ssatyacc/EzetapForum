@@ -2,6 +2,10 @@ package ezetap.satya.ezetapform;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -14,9 +18,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
+
 public class Screen1 extends AppCompatActivity {
+    private static final String TAG = "Screen1";
 
     private static final int DEFAULT_PADDING = 16;
+    TreeMap<String, EditText> inputValues = new TreeMap<>();
     private Screen1Data dataApi;
     private LinearLayout root;
 
@@ -49,7 +59,6 @@ public class Screen1 extends AppCompatActivity {
     private void showForum(JSONObject response) throws JSONException {
         findViewById(R.id.loading).setVisibility(View.GONE);
         findViewById(R.id.retry).setVisibility(View.GONE);
-        // TODO: 9/29/16 Create view based on response
 
         JSONArray items = response.getJSONArray("items");
         for (int i = 0; i < items.length(); i++) {
@@ -58,7 +67,7 @@ public class Screen1 extends AppCompatActivity {
             layout.setOrientation(LinearLayout.HORIZONTAL);
             layout.setPadding(DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING);
 
-            String itemType = item.getString("itemType");
+            String itemType = item.optString("itemType", "");
             switch (itemType) {
                 case "label":
                     String labelName = item.getString("name");
@@ -71,8 +80,10 @@ public class Screen1 extends AppCompatActivity {
                     break;
                 case "textbox":
                     String textboxName = item.getString("name");
-                    String textboxInputType = item.getString("type");
-                    String textboxMaxLength = item.getString("maxlength");
+                    final String textboxInputType = item.getString("type");
+                    int textboxMaxLength = item.optInt("maxlength", -1);
+                    final int textboxMinValue = item.optInt("minValue", Integer.MIN_VALUE);
+                    final int textboxMaxValue = item.optInt("maxValue", Integer.MAX_VALUE);
 
                     TextView textboxTextView = new TextView(this);
                     textboxTextView.setLayoutParams(new LinearLayout.LayoutParams(
@@ -80,17 +91,81 @@ public class Screen1 extends AppCompatActivity {
                             LinearLayout.LayoutParams.WRAP_CONTENT));
                     textboxTextView.setText(textboxName);
 
-                    EditText textboxEditText = new EditText(this);
+                    final EditText textboxEditText = new EditText(this);
                     textboxEditText.setLayoutParams(new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT));
 
+                    switch (textboxInputType) {
+                        default:
+                        case "text":
+                            textboxEditText.setInputType(InputType.TYPE_CLASS_TEXT);
+                            break;
+                        case "phone":
+                            textboxEditText.setInputType(InputType.TYPE_CLASS_PHONE);
+                            break;
+                        case "number":
+                            textboxEditText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                            break;
+                    }
+
+                    List<InputFilter> filters = new ArrayList<>();
+                    if (textboxMaxLength != -1) {
+                        filters.add(new InputFilter.LengthFilter(textboxMaxLength));
+                    }
+
+                    if (textboxEditText.getInputType() == InputType.TYPE_CLASS_NUMBER) {
+                        textboxEditText.addTextChangedListener(new TextWatcher() {
+                            @Override
+                            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                                // Do Nothing
+                            }
+
+                            @Override
+                            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                                // Do Nothing
+                            }
+
+                            @Override
+                            public void afterTextChanged(Editable s) {
+                                String replaceString;
+                                String inputNumber = textboxEditText.getText().toString();
+
+                                if (!isInt(inputNumber) || Integer.valueOf(inputNumber) > textboxMaxValue) {
+                                    replaceString = "" + textboxMaxValue;
+                                    textboxEditText.setText(replaceString);
+                                    textboxEditText.setSelection(replaceString.length());
+                                } else if (Integer.valueOf(inputNumber) < textboxMinValue) {
+                                    replaceString = "" + textboxMinValue;
+                                    textboxEditText.setText(replaceString);
+                                    textboxEditText.setSelection(replaceString.length());
+                                }
+                            }
+
+                            private boolean isInt(String s) {
+                                try {
+                                    Integer.valueOf(s);
+                                    return true;
+                                } catch (Exception e) {
+                                    return false;
+                                }
+                            }
+                        });
+                    }
+
+                    InputFilter[] inputFilters = new InputFilter[filters.size()];
+                    if (filters.size() > 0) {
+                        textboxEditText.setFilters(filters.toArray(inputFilters));
+                    }
+
                     layout.addView(textboxTextView);
                     layout.addView(textboxEditText);
 
+                    inputValues.put(textboxName, textboxEditText);
+
                     break;
                 case "dropdown":
-                    String dropdownHint = item.getString("hint");
+                    String dropdownHint = item.getString("name");
                     JSONArray valuesArray = item.getJSONArray("values");
 
                     String[] dropdownValues = new String[valuesArray.length()];
@@ -114,6 +189,7 @@ public class Screen1 extends AppCompatActivity {
 
                     break;
                 case "button":
+                default:
                     String buttonText = item.getString("name");
                     Button buttonButton = new Button(this);
                     buttonButton.setText(buttonText);
