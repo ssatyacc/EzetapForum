@@ -3,22 +3,38 @@ package ezetap.satya.ezetapform;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Screen1 extends AppCompatActivity {
 
+    private static final int DEFAULT_PADDING = 16;
     private Screen1Data dataApi;
+    private LinearLayout root;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_screen1);
 
+        root = (LinearLayout) findViewById(R.id.root);
         dataApi = new Screen1Data(new Screen1Data.ForumDataListener() {
             @Override
             public void onSuccess(JSONObject response) {
-                showForum(response);
+                try {
+                    showForum(response);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    showRetry();
+                }
             }
 
             @Override
@@ -30,10 +46,94 @@ public class Screen1 extends AppCompatActivity {
         dataApi.getForumData();
     }
 
-    private void showForum(JSONObject response) {
+    private void showForum(JSONObject response) throws JSONException {
         findViewById(R.id.loading).setVisibility(View.GONE);
         findViewById(R.id.retry).setVisibility(View.GONE);
         // TODO: 9/29/16 Create view based on response
+
+        JSONArray items = response.getJSONArray("items");
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject item = items.getJSONObject(i);
+            LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.HORIZONTAL);
+            layout.setPadding(DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING);
+
+            String itemType = item.getString("itemType");
+            switch (itemType) {
+                case "label":
+                    String labelName = item.getString("name");
+                    TextView labelTextView = new TextView(this);
+                    labelTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT));
+                    labelTextView.setText(labelName);
+                    layout.addView(labelTextView);
+                    break;
+                case "textbox":
+                    String textboxName = item.getString("name");
+                    String textboxInputType = item.getString("type");
+                    String textboxMaxLength = item.getString("maxlength");
+
+                    TextView textboxTextView = new TextView(this);
+                    textboxTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT));
+                    textboxTextView.setText(textboxName);
+
+                    EditText textboxEditText = new EditText(this);
+                    textboxEditText.setLayoutParams(new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT));
+
+                    layout.addView(textboxTextView);
+                    layout.addView(textboxEditText);
+
+                    break;
+                case "dropdown":
+                    String dropdownHint = item.getString("hint");
+                    JSONArray valuesArray = item.getJSONArray("values");
+
+                    String[] dropdownValues = new String[valuesArray.length()];
+                    for (int j = 0; j < valuesArray.length(); j++) {
+                        dropdownValues[j] = valuesArray.getString(j);
+                    }
+
+                    TextView dropdownTextView = new TextView(this);
+                    dropdownTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT));
+                    dropdownTextView.setText(dropdownHint);
+
+                    Spinner dropdownSpinner = new Spinner(this);
+                    ArrayAdapter<String> dropdownAdapter = new ArrayAdapter<String>(this,
+                            android.R.layout.simple_spinner_item, dropdownValues);
+                    dropdownSpinner.setAdapter(dropdownAdapter);
+
+                    layout.addView(dropdownTextView);
+                    layout.addView(dropdownSpinner);
+
+                    break;
+                case "button":
+                    String buttonText = item.getString("name");
+                    Button buttonButton = new Button(this);
+                    buttonButton.setText(buttonText);
+
+                    buttonButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            proceedToScreen2();
+                        }
+                    });
+                    layout.addView(buttonButton);
+                    break;
+            }
+
+            root.addView(layout);
+        }
+    }
+
+    private void proceedToScreen2() {
+        Screen2.start(this);
     }
 
     private void showRetry() {

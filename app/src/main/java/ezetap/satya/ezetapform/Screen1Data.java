@@ -1,5 +1,7 @@
 package ezetap.satya.ezetapform;
 
+import android.util.Log;
+
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -26,6 +28,7 @@ class Screen1Data {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
+                        Log.d(TAG, "onResponse: " + response);
                         mListener.onSuccess(response);
                     }
                 }, new Response.ErrorListener() {
